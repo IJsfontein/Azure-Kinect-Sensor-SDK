@@ -59,6 +59,14 @@ namespace Microsoft.Azure.Kinect.Sensor
             K4A_STREAM_RESULT_EOF,
         }
 
+        [NativeReference]
+        public enum k4a_playback_seek_origin_t
+        {
+            K4A_PLAYBACK_SEEK_BEGIN = 0,
+            K4A_PLAYBACK_SEEK_END,
+            K4A_PLAYBACK_SEEK_DEVICE_TIME,
+        }
+
         [DllImport("k4a", CallingConvention = k4aCallingConvention)]
         [NativeReference]
         public static extern k4a_result_t k4a_set_allocator(
@@ -390,6 +398,70 @@ namespace Microsoft.Azure.Kinect.Sensor
             IntPtr message_cb_context,
             LogLevel min_level);
 
+        [DllImport("k4arecord", CharSet = CharSet.Ansi, CallingConvention = k4aCallingConvention, ThrowOnUnmappableChar = true, BestFitMapping = false)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_playback_open(string file_path, out IntPtr playback_handle);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_playback_get_calibration(IntPtr playback_handle, out Calibration calibration);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_playback_get_record_configuration(IntPtr playback_handle, out k4a_record_configuration_t config);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_playback_set_color_conversion(IntPtr playback_handle, ImageFormat target_format);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_stream_result_t k4a_playback_get_next_capture(IntPtr playback_handle, out k4a_capture_t capture_handle);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_stream_result_t k4a_playback_get_previous_capture(IntPtr playback_handle, out k4a_capture_t capture_handle);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_stream_result_t k4a_playback_get_next_imu_sample(IntPtr playback_handle, ImuSample imu_sample);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_stream_result_t k4a_playback_get_previous_imu_sample(IntPtr playback_handle, ImuSample imu_sample);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_playback_seek_timestamp(IntPtr playback_handle, ulong offset_usec, k4a_playback_seek_origin_t origin);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern ulong k4a_playback_get_last_timestamp_usec(IntPtr playback_handle);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern void k4a_playback_close(IntPtr playback_handle);
+
+        [DllImport("k4arecord", CharSet = CharSet.Ansi, CallingConvention = k4aCallingConvention, ThrowOnUnmappableChar = true, BestFitMapping = false)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_record_create(string file_path, k4a_device_t device_handle, k4a_device_configuration_t device_config, out IntPtr recording_handle);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_record_write_header(IntPtr recording_handle);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_record_write_capture(IntPtr recording_handle, k4a_capture_t capture_handle);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern k4a_result_t k4a_record_flush(IntPtr recording_handle);
+
+        [DllImport("k4arecord", CallingConvention = k4aCallingConvention)]
+        [NativeReference]
+        public static extern void k4a_record_close(IntPtr recording_handle);
+
         [NativeReference]
         [StructLayout(LayoutKind.Sequential)]
         public struct k4a_version_t
@@ -442,6 +514,43 @@ namespace Microsoft.Azure.Kinect.Sensor
             public WiredSyncMode wired_sync_mode;
             public uint subordinate_delay_off_master_usec;
             public bool disable_streaming_indicator;
+        }
+
+        [NativeReference]
+        [StructLayout(LayoutKind.Sequential)]
+        public struct k4a_record_configuration_t
+        {
+            public ImageFormat color_format;
+            public ColorResolution color_resolution;
+            public DepthMode depth_mode;
+            public FPS camera_fps;
+            public byte color_track_enabled;
+            public byte depth_track_enabled;
+            public byte ir_track_enabled;
+            public byte imu_track_enabled;
+            public int depth_delay_off_color_usec;
+            public WiredSyncMode wired_sync_mode;
+            public uint subordinate_delay_off_master_usec;
+            public uint start_timestamp_offset_usec;
+
+            public RecordConfiguration ToRecordConfiguration()
+            {
+                return new RecordConfiguration()
+                {
+                    ColorFormat = this.color_format,
+                    ColorResolution = this.color_resolution,
+                    DepthMode = this.depth_mode,
+                    CameraFPS = this.camera_fps,
+                    ColorTrackEnabled = this.color_track_enabled != 0,
+                    DepthTrackEnabled = this.depth_track_enabled != 0,
+                    IRTrackEnabled = this.ir_track_enabled != 0,
+                    ImuTrackEnabled = this.imu_track_enabled != 0,
+                    DepthDelayOffColor = TimeSpan.FromTicks(checked((long)this.depth_delay_off_color_usec) * 10),
+                    WiredSyncMode = this.wired_sync_mode,
+                    SubordinateDelayOffMaster = TimeSpan.FromTicks(checked((long)this.subordinate_delay_off_master_usec) * 10),
+                    StartTimestampOffset = TimeSpan.FromTicks(checked((long)this.start_timestamp_offset_usec) * 10),
+                };
+            }
         }
 
         public class k4a_device_t : Win32.SafeHandles.SafeHandleZeroOrMinusOneIsInvalid

@@ -504,6 +504,27 @@ namespace Microsoft.Azure.Kinect.Sensor
         }
 
         /// <summary>
+        /// Gets the native handle.
+        /// </summary>
+        /// <returns>The native handle that is wrapped by this device.</returns>
+        /// <remarks>The function is dangerous because there is no guarantee that the
+        /// handle will not be disposed once it is retrieved. This should only be called
+        /// by code that can ensure that the Device object will not be disposed on another
+        /// thread.</remarks>
+        internal NativeMethods.k4a_device_t DangerousGetHandle()
+        {
+            lock (this)
+            {
+                if (this.disposedValue)
+                {
+                    throw new ObjectDisposedException(nameof(Device));
+                }
+
+                return this.handle;
+            }
+        }
+
+        /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
         /// <param name="disposing"><c>True</c> to release both managed and unmanaged resources; <c>False</c> to release only unmanaged resources.</param>
