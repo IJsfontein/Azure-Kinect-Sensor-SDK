@@ -257,8 +257,6 @@ namespace Microsoft.Azure.Kinect.Sensor
                 // we are performing the transformation
                 using (Image depthReference = depth.Reference())
                 using (Image customReference = custom.Reference())
-                using (Image transformedDepthReference = transformedDepth.Reference())
-                using (Image transformedCustomReference = transformedCustom.Reference())
                 {
                     // Ensure changes made to the managed memory are visible to the native layer
                     depthReference.FlushMemory();
@@ -268,13 +266,13 @@ namespace Microsoft.Azure.Kinect.Sensor
                         this.handle,
                         depthReference.DangerousGetHandle(),
                         customReference.DangerousGetHandle(),
-                        transformedDepthReference.DangerousGetHandle(),
+                        transformedDepth.DangerousGetHandle(),
                         transformedCustom.DangerousGetHandle(),
                         interpolationType,
                         invalidCustomValue));
 
                     // Copy the native memory back to managed memory if required
-                    transformedDepthReference.InvalidateMemory();
+                    transformedDepth.InvalidateMemory();
                     transformedCustom.InvalidateMemory();
                 }
             }
